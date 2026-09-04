@@ -1,4 +1,16 @@
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import {
+  appendFileSync,
+  closeSync,
+  fstatSync,
+  mkdirSync,
+  openSync,
+  readFileSync,
+  readSync,
+  renameSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, join } from "node:path";
 import { NAMES } from "./names.ts";
 
@@ -76,6 +88,108 @@ export function save(path: string, roster: Roster): void {
   const temp = path + "." + process.pid + ".tmp";
   writeFileSync(temp, JSON.stringify(roster, null, 2));
   renameSync(temp, path);
+}
+
+const LOCK_WAIT_MS = 500;
+const LOCK_STALE_MS = 5000;
+const TAIL_BYTES = 65536;
+
+function takeLock(lock: string): boolean {
+  const deadline = Date.now() + LOCK_WAIT_MS;
+  const idle = new Int32Array(new SharedArrayBuffer(4));
+  for (;;) {
+    try {
+      mkdirSync(lock, { recursive: false });
+      return true;
+    } catch (error: any) {
+      if (error?.code !== "EEXIST") return false;
+      try {
+        if (Date.now() - statSync(lock).mtimeMs > LOCK_STALE_MS) {
+          rmSync(lock, { recursive: true, force: true });
+          continue;
+        }
+      } catch {}
+      if (Date.now() >= deadline) return false;
+      // No sleep in sync node, so park the thread on a buffer nobody wakes.
+      Atomics.wait(idle, 0, 0, 10);
+    }
+  }
+}
+
+// Several hooks can write the roster at once when agents run in parallel.
+// Load, change and save under one lock so an update cannot lose another.
+export function update(path: string, fn: (roster: Roster) => unknown): void {
+  const lock = path + ".lock";
+  const locked = takeLock(lock);
+  if (!locked) console.error("byname: roster lock busy, writing without it");
+  try {
+    const roster = load(path);
+    if (fn(roster) !== false) save(path, roster);
+  } finally {
+    if (locked) {
+      try {
+        rmSync(lock, { recursive: true, force: true });
+      } catch {}
+    }
+  }
+}
+
+export function activityPath(sessionDir: string, agentId: string): string {
+  return join(sessionDir, "subagents", "agent-" + agentId + ".byname.jsonl");
+}
+
+export function appendActivity(path: string, entry: Record<string, unknown>): void {
+  mkdirSync(dirname(path), { recursive: true });
+  appendFileSync(path, JSON.stringify(entry) + "\n");
+}
+
+export function activity(path: string): any[] {
+  try {
+    return readFileSync(path, "utf8")
+      .split("\n")
+      .filter((line) => line.trim())
+      .map((line) => {
+        try {
+          return JSON.parse(line);
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+// Context in use is the last assistant turn's input plus both cache figures.
+// Only the tail of the transcript can hold that line, so read no more.
+export function contextTokens(transcript: string): number | undefined {
+  const fd = openSync(transcript, "r");
+  let text: string;
+  try {
+    const size = fstatSync(fd).size;
+    const length = Math.min(size, TAIL_BYTES);
+    const buffer = Buffer.alloc(length);
+    readSync(fd, buffer, 0, length, size - length);
+    text = buffer.toString("utf8");
+  } finally {
+    closeSync(fd);
+  }
+
+  let total: number | undefined;
+  for (const line of text.split("\n")) {
+    if (!line.trim()) continue;
+    try {
+      const entry = JSON.parse(line);
+      const usage = entry.type === "assistant" ? entry.message?.usage : undefined;
+      if (!usage) continue;
+      total =
+        (usage.input_tokens ?? 0) +
+        (usage.cache_creation_input_tokens ?? 0) +
+        (usage.cache_read_input_tokens ?? 0);
+    } catch {}
+  }
+  return total;
 }
 
 export function pickName(roster: Roster): string {

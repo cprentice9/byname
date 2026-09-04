@@ -2,7 +2,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Agent|SendMessage",
+        "matcher": "",
         "hooks": [
           {
             "type": "command",
@@ -51,7 +51,27 @@
         ]
       }
     ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/activity.ts\""
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/activity.ts\""
+          }
+        ]
+      },
       {
         "matcher": "Agent",
         "hooks": [

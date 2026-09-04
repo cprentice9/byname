@@ -1,4 +1,4 @@
-import { additionalContext, load, rosterPath, run } from "../lib/roster.ts";
+import { activity, activityPath, additionalContext, load, rosterPath, run, sessionDir } from "../lib/roster.ts";
 
 const flat = (text: string) => text.replace(/\s+/g, " ").trim();
 
@@ -11,7 +11,8 @@ const HEADER = [
 ].join(" ");
 
 run((payload) => {
-  const roster = load(rosterPath(payload));
+  const path = rosterPath(payload);
+  const roster = load(path);
   const ids = Object.keys(roster.agents);
   if (!ids.length) return null;
 
@@ -19,11 +20,15 @@ run((payload) => {
     const agent = roster.agents[id];
     const size = agent.context_tokens ? `, ${(agent.context_tokens / 1000).toFixed(1)}k context` : "";
     const count = agent.ids.length > 1 ? `, ${agent.ids.length} instances` : "";
+    const calls = activity(activityPath(sessionDir(payload), id)).filter((e) => e.event === "start").length;
+    const tools = calls ? `, ${calls} tool calls` : "";
     const task = agent.tasks[agent.tasks.length - 1];
     const last = task ? ` Last task: ${flat(task.description)}.` : "";
     const report = task?.report ? ` Report: ${flat(task.report).slice(0, 200)}` : "";
-    return `- ${agent.name} (${agent.model}, ${agent.type}, ${agent.status}${size}${count}).${last}${report}`;
+    return `- ${agent.name} (${agent.model}, ${agent.type}, ${agent.status}${size}${count}${tools}).${last}${report}`;
   });
 
+  // The /byname skill reads this line to find the roster it should print.
+  lines.push("Roster file: " + path);
   return additionalContext(payload.hook_event_name, HEADER + "\n" + lines.join("\n"));
 });
