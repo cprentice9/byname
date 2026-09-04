@@ -21,15 +21,41 @@ run((payload) => {
   if (index < 0) index = roster.pending.length ? 0 : -1;
   const pending = index >= 0 ? roster.pending.splice(index, 1)[0] : undefined;
 
+  const task = pending
+    ? [
+        {
+          description: pending.description,
+          prompt: pending.prompt,
+          started_at: pending.at,
+          tool_use_id: pending.tool_use_id,
+        },
+      ]
+    : [];
+
+  const prior = pending?.resume_of ? roster.agents[pending.resume_of] : undefined;
+  if (prior && pending) {
+    // A new instance of a known agent. Rekey the record so the roster keeps
+    // pointing at the live id and the name carries over.
+    delete roster.agents[pending.resume_of as string];
+    prior.ids.push(id);
+    prior.status = "working";
+    prior.tasks.push(...task);
+    roster.agents[id] = prior;
+    save(path, roster);
+    return additionalContext(
+      payload.hook_event_name,
+      `Byname: welcome back, ${prior.name}. Your briefing is at the top of your prompt. Sign your final report as ${prior.name}.`,
+    );
+  }
+
   const name = pickName(roster);
   roster.agents[id] = {
     name,
+    ids: [id],
     type: payload.agent_type ?? pending?.type ?? "",
     model: pending?.model ?? "",
     status: "working",
-    tasks: pending
-      ? [{ description: pending.description, prompt: pending.prompt, started_at: pending.at }]
-      : [],
+    tasks: task,
   };
   save(path, roster);
 
