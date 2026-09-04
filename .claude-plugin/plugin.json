@@ -2,5 +2,8 @@
   "name": "byname",
   "version": "0.1.0",
   "description": "Gives every subagent a human name and keeps a roster, so you can call an agent back by name after a resume.",
-  "hooks": "./hooks/hooks.json"
+  "hooks": "./hooks/hooks.json",
+  "author": {
+    "name": "Connor Prentice"
+  }
 }

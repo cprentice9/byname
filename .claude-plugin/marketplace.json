@@ -1,0 +1,11 @@
+{
+  "name": "cprentice9",
+  "owner": { "name": "Connor Prentice" },
+  "plugins": [
+    {
+      "name": "byname",
+      "source": "./",
+      "description": "Gives every subagent a human name and keeps a roster, so you can call an agent back by name after a resume."
+    }
+  ]
+}
