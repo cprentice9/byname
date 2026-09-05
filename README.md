@@ -10,7 +10,7 @@ A hook on `SubagentStart` picks the next unused name and tells the subagent to s
 
 There are two ways to continue an agent. If the `SendMessage` tool is available, Byname turns the name into the agent id and the message goes to the live agent. If it is not, the main agent puts the name first in an Agent call description. Byname then reads that agent's earlier transcript, puts a short briefing at the top of the new prompt, and the roster treats the new instance as the same named agent.
 
-Every tool call a subagent makes goes into a per-agent activity log next to its transcript, with a context reading after each call. `/byname` prints the roster with tasks, tool counts, and context per agent, and `/byname --tools` lists every call.
+Every tool call a subagent makes goes into a per-agent activity log next to its transcript, with a context reading after each call. `/byname` writes a self-contained HTML page into the session folder and shows it, with a context bar per agent and the tool calls behind a toggle. `/byname text` prints the plain version instead.
 
 The roster is a `byname.json` file in the session folder that already holds the subagent transcripts, so it lasts as long as the session does.
 
