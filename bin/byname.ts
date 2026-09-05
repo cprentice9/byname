@@ -1,5 +1,5 @@
 import { dirname } from "node:path";
-import { activity, activityPath, load } from "../lib/roster.ts";
+import { activity, activityPath, extractSummary, load } from "../lib/roster.ts";
 
 const path = process.argv[2] ?? "";
 const withTools = process.argv.includes("--tools");
@@ -55,7 +55,10 @@ if (!ids.length) {
             .join(" ")
             .trimEnd(),
       );
-      if (task.report) console.log("      " + flat(task.report).slice(0, 120));
+      // Older rosters have no summary, so read one out of the report here.
+      const summary = task.summary ?? (task.report ? extractSummary(agent.name, task.report).summary : "");
+      if (summary) console.log("      " + flat(summary));
+      else if (task.report) console.log("      " + flat(task.report).slice(0, 120));
       if (!withTools) continue;
       for (const call of calls) {
         console.log(

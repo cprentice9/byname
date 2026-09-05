@@ -1,4 +1,4 @@
-import { activity, activityPath, additionalContext, load, rosterPath, run, sessionDir } from "../lib/roster.ts";
+import { activity, activityPath, additionalContext, extractSummary, load, rosterPath, run, sessionDir } from "../lib/roster.ts";
 
 const flat = (text: string) => text.replace(/\s+/g, " ").trim();
 
@@ -24,8 +24,15 @@ run((payload) => {
     const tools = calls ? `, ${calls} tool calls` : "";
     const task = agent.tasks[agent.tasks.length - 1];
     const last = task ? ` Last task: ${flat(task.description)}.` : "";
-    const report = task?.report ? ` Report: ${flat(task.report).slice(0, 200)}` : "";
-    return `- ${agent.name} (${agent.model}, ${agent.type}, ${agent.status}${size}${count}${tools}).${last}${report}`;
+    // Rosters written before summaries existed still have a report, so read
+    // one out of it here rather than rewriting the file.
+    const summary = task?.summary ?? (task?.report ? extractSummary(agent.name, task.report).summary : "");
+    const did = summary
+      ? ` Did: ${flat(summary)}`
+      : task?.report
+        ? ` Report: ${flat(task.report).slice(0, 200)}`
+        : "";
+    return `- ${agent.name} (${agent.model}, ${agent.type}, ${agent.status}${size}${count}${tools}).${last}${did}`;
   });
 
   // The /byname skill reads this line to find the roster it should print.

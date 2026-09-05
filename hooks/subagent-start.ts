@@ -8,7 +8,7 @@ run((payload) => {
     const existing = roster.agents[id];
     if (existing) {
       existing.status = "working";
-      text = `Byname: welcome back, ${existing.name}. Sign your final report as ${existing.name}.`;
+      text = `Byname: welcome back, ${existing.name}. End your final report with one line in exactly this form: "${existing.name}: <one plain sentence saying what you did>".`;
       return;
     }
 
@@ -38,7 +38,7 @@ run((payload) => {
       prior.status = "working";
       prior.tasks.push(...task);
       roster.agents[id] = prior;
-      text = `Byname: welcome back, ${prior.name}. Your briefing is at the top of your prompt. Sign your final report as ${prior.name}.`;
+      text = `Byname: welcome back, ${prior.name}. Your briefing is at the top of your prompt. End your final report with one line in exactly this form: "${prior.name}: <one plain sentence saying what you did>".`;
       return;
     }
 
@@ -51,7 +51,7 @@ run((payload) => {
       status: "working",
       tasks: task,
     };
-    text = `Byname: your name is ${name}. Sign your final report as ${name}.`;
+    text = `Byname: your name is ${name}. End your final report with one line in exactly this form: "${name}: <one plain sentence saying what you did>".`;
   });
 
   return text ? additionalContext(payload.hook_event_name, text) : null;

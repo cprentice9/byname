@@ -20,6 +20,7 @@ export type Task = {
   started_at: string;
   finished_at?: string;
   report?: string;
+  summary?: string;
   tool_use_id?: string;
 };
 
@@ -288,4 +289,32 @@ export async function run(handler: (payload: any) => unknown): Promise<void> {
 
 export function additionalContext(event: string, text: string): unknown {
   return { hookSpecificOutput: { hookEventName: event, additionalContext: text } };
+}
+
+// Agents are asked to end a report with "Name: what I did". When they do, that
+// line is the summary and it leaves the report. When they do not, take the
+// first sentence with the markdown noise stripped out.
+export function extractSummary(name: string, report: string): { summary: string; report: string } {
+  const text = typeof report === "string" ? report : "";
+  const lines = text.split("\n");
+  let last = lines.length - 1;
+  while (last >= 0 && !lines[last].trim()) last--;
+  const line = last >= 0 ? lines[last] : "";
+  const colon = line.indexOf(":");
+  const head = colon > 0 ? line.slice(0, colon).trim().toLowerCase() : "";
+  const tail = colon > 0 ? line.slice(colon + 1).trim() : "";
+  if (tail && head && head === String(name ?? "").trim().toLowerCase()) {
+    lines.splice(last, 1);
+    return { summary: tail, report: lines.join("\n").trim() };
+  }
+
+  const plain = text
+    .replace(/\*\*/g, "")
+    .replace(/`/g, "")
+    .replace(/^\s*#+\s*/gm, "")
+    .replace(/^\s*[-*]\s+/gm, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const end = plain.search(/[.!?] /);
+  return { summary: trunc(end >= 0 ? plain.slice(0, end + 1) : plain, 160), report: text };
 }
