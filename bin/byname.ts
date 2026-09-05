@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { activity, activityPath, extractSummary, load } from "../lib/roster.ts";
 
 const CONTEXT_LIMIT = 200000;
@@ -320,6 +321,7 @@ if (process.argv.includes("--html")) {
   const out = resolve(join(dirname(path), "byname.html"));
   writeFileSync(out, renderHtml(view));
   console.log(out);
+  console.log(pathToFileURL(out).href);
 } else {
   console.log(renderText(view, process.argv.includes("--tools")));
 }

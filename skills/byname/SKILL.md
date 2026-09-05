@@ -13,7 +13,7 @@ Run:
 node "${CLAUDE_PLUGIN_ROOT}/bin/byname.ts" "<roster path>" --html
 ```
 
-It writes the page next to the roster and prints the path.
+It writes the page next to the roster and prints two lines: the file path and a file URL.
 
 Then show the page. If a tool for sending files to the user is available, such as SendUserFile, call it with that path and display set to render. If not, open the file with the operating system:
 
@@ -21,6 +21,6 @@ Then show the page. If a tool for sending files to the user is available, such a
 - macOS: `open "<path>"`
 - Linux: `xdg-open "<path>"`
 
-Tell the user in one line where the file is, then stop.
+Then always end your reply with a markdown link to the file URL, like [Open the roster](file:///C:/Users/you/.claude/projects/p/s/byname.html), so the user can click it to open the page in their browser. Nothing else after the link.
 
 If the user asked for text, for example "/byname text", run the same command without `--html` and print the output in a code block instead. Add `--tools` after the path if the user asks for the tool calls.
