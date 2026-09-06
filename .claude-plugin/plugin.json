@@ -1,6 +1,6 @@
 {
   "name": "byname",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Gives every subagent a human name and keeps a roster, so you can call an agent back by name after a resume.",
   "author": {
     "name": "Connor Prentice"

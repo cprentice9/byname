@@ -50,6 +50,9 @@ export type Roster = {
   version: number;
   agents: Record<string, Agent>;
   pending: Pending[];
+  // Fingerprint of the agent lines in the last full injection. While it
+  // matches, prompts get a one line reminder instead of the whole roster.
+  injected?: string;
 };
 
 export const PROMPT_LIMIT = 500;
@@ -78,7 +81,7 @@ export function load(path: string): Roster {
       for (const id of Object.keys(data.agents)) {
         if (!Array.isArray(data.agents[id].ids)) data.agents[id].ids = [id];
       }
-      return { version: 1, agents: data.agents, pending: data.pending ?? [] };
+      return { version: 1, agents: data.agents, pending: data.pending ?? [], injected: data.injected };
     }
   } catch {}
   return { version: 1, agents: {}, pending: [] };
