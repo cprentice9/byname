@@ -6,6 +6,16 @@
       "name": "byname",
       "source": "./",
       "description": "Gives every subagent a human name and keeps a roster, so you can call an agent back by name after a resume."
+    },
+    {
+      "name": "working-clawd",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/cprentice9/ccmods.git",
+        "path": "working-clawd"
+      },
+      "description": "While Claude works, Clawd walks above the prompt across a starry sky, with a smaller Clawd beside him for each running subagent.",
+      "homepage": "https://github.com/cprentice9/ccmods/tree/main/working-clawd"
     }
   ]
 }
